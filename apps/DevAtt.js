@@ -170,7 +170,7 @@ export class DevAtt extends plugin {
       keyList += '\n' + '[' + item.name[0] + ']： ' + item.desc
     })
     // 给出设备的方法列表
-    keyList += '=== ' + devName + ' 的方法 ==='
+    keyList += '\n=== ' + devName + ' 的方法 ==='
     adapter.function.forEach((item) => {
       keyList += '\n' + '[' + item.name[0] + ']： ' + item.desc
     })
@@ -285,13 +285,13 @@ export class DevAtt extends plugin {
         }
         e.reply('已将 ' + listen[e.user_id].devName + ' 的 ' + listen[e.user_id].key + ' 设置为 ' + e.msg)
       } else {
-      	let value_next = e.msg == '无'? null: e.msg
-        const devAtt = await CoreApi.runAction([{
+      	let value_next = e.msg == '无'? []: [e.msg]
+        const devAtt = await CoreApi.runAction({
           "did": listen[e.user_id].did,
           "siid": listen[e.user_id].siid,
           "piid": listen[e.user_id].aiid,
           "value": value_next
-        }], listen[e.user_id].authorize)
+	}, listen[e.user_id].authorize)
         if (devAtt.code != 0) {
           e.reply('设置失败，错误码：' + devAtt.code)
           return true

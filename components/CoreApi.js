@@ -43,7 +43,7 @@ class CoreApi {
         return await postData(uri, data, authorize);
     }
     
-    asyna runAction(params, authorize) {
+    async runAction(params, authorize) {
         const uri = '/miotspec/action';
         const data = {
             "params": params
