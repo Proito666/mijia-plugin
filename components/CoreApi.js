@@ -42,6 +42,14 @@ class CoreApi {
         }
         return await postData(uri, data, authorize);
     }
+    
+    asyna runAction(params, authorize) {
+        const uri = '/miotspec/action';
+        const data = {
+            "params": params
+        }
+        return await postData(uri, data, authorize);
+    }
 
     async getRooms(authorize) {
         const uri = '/v2/homeroom/gethome';

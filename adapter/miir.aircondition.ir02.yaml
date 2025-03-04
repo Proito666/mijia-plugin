@@ -1,0 +1,45 @@
+actionable:                                 # 权限"写"接口
+  - name: ["模式"]                          # 操作名称
+    desc: "空调模式，可用值：：0 - 自动 / 1 - 制冷 / 2 - 除湿 / 3 - 制热 / 4 - 通风"          # 操作描述与值范围提示，操作设备时会提示
+    siid: 2                                 # 功能分类ID
+    piid: 1                                 # 设备属性ID
+    value_regexp: '/[0-4]/g'               # 值的正则表达式，避免用户传入不符合规范的值
+  - name: ["温度"]
+    desc: "空调温度，可用值：16-30"
+    siid: 2
+    piid: 2
+    value_regexp: '/([16-30])/g'
+function:
+  - name: ["开机"]
+    desc: "空调开机"
+    siid: 2
+    aiid: 6
+  - name: ["关机"]
+    desc: "空调关机"
+    siid: 2
+    aiid: 5
+  - name: ["温度上升"]
+    desc: "空调温度上升"
+    siid: 2
+    aiid: 4
+  - name: ["温度下降"]
+    desc: "空调温度下降"
+    siid: 2
+    aiid: 3
+  - name: ["风速增加"]
+    desc: "空调风速增加"
+    siid: 2
+    aiid: 2
+  - name: ["风速减少"]
+    desc: "空调风速减少"
+    siid: 2
+    aiid: 1
+viewable:                                 # 权限"读"接口
+  - name: '空调模式'                       # 展示名称
+    siid: 2                               # 功能分类ID
+    piid: 1                               # 设备属性ID
+    unit: ''                              # 值的单位，可不填
+  - name: '空调温度'
+    siid: 2
+    piid: 2
+    unit: '°C'

@@ -169,7 +169,12 @@ export class DevAtt extends plugin {
     adapter.actionable.forEach((item) => {
       keyList += '\n' + '[' + item.name[0] + ']： ' + item.desc
     })
-    keyList += '\n请直接回复要设置的参数即可，如：' + adapter.actionable[0].name[0]
+    // 给出设备的方法列表
+    keyList += '=== ' + devName + ' 的方法 ==='
+    adapter.function.forEach((item) => {
+      keyList += '\n' + '[' + item.name[0] + ']： ' + item.desc
+    })
+    keyList += '\n请直接回复要设置的参数或要执行的方法即可，如：' + adapter.actionable[0].name[0]
     await e.reply(keyList)
     listen[e.user_id] = {
       "step": 1,
@@ -180,6 +185,7 @@ export class DevAtt extends plugin {
       "did": did,
       "siid": null,
       "piid": null,
+      "aiid": null,
       "value_regexp": null,
       "value": ""
     }
@@ -204,6 +210,7 @@ export class DevAtt extends plugin {
     if (listen[e.user_id].step == 1) {
       let siid = null
       let piid = null
+      let aiid = null
       let value_regexp = null
       listen[e.user_id].adapter.actionable.forEach((item) => {
         if (item.name.includes(e.msg)) {
@@ -213,13 +220,25 @@ export class DevAtt extends plugin {
         }
       })
       if (!siid) {
+	listen[e.user_id].adapter.function.forEach((item) => {
+          if (item.name.includes(e.msg)) {
+            siid = item.siid
+            aiid = item.aiid
+          }
+        })
+       e.reply("请输入方法参数：\n如果没有请回复无")
+      } else {
+       e.reply("请输入要设置的参数：\n请直接回复要设定的值即可，如：开")
+      }
+      if (!siid && !aiid) {
         e.reply('不支持该参数：' + e.msg)
         return true
       }
-      e.reply("请输入要设置的参数：\n请直接回复要设定的值即可，如：开")
+
       listen[e.user_id].step = 2
       listen[e.user_id].siid = siid
       listen[e.user_id].piid = piid
+      listen[e.user_id].aiid = aiid
       listen[e.user_id].key = e.msg
       listen[e.user_id].value_regexp = value_regexp
       clearTimeout(timeout[e.user_id])
@@ -233,37 +252,52 @@ export class DevAtt extends plugin {
     }
 
     if (listen[e.user_id].step == 2) {
+      if (listen[e.user_id].piid) {
+      
+        // 检查值是否符合正则
+        if (!eval(listen[e.user_id].value_regexp).test(e.msg)) {
+          e.reply('不支持该值：' + e.msg)
+          return true
+        }
 
-      // 检查值是否符合正则
-      if (!eval(listen[e.user_id].value_regexp).test(e.msg)) {
-        e.reply('不支持该值：' + e.msg)
-        return true
-      }
+        let value_next = e.msg
 
-      let value_next = e.msg
+        // 如果值为bool型，转换为bool型
+        if (e.msg == '开') {
+          value_next = true
+        } else if (e.msg == '关') {
+          value_next = false
+        }
 
-      // 如果值为bool型，转换为bool型
-      if (e.msg == '开') {
-        value_next = true
-      } else if (e.msg == '关') {
-        value_next = false
+        // 如果值为数字型，转换为数字型
+        if (!isNaN(e.msg)) {
+          value_next = Number(e.msg)
+        }
+        const devAtt = await CoreApi.setDevAtt([{
+          "did": listen[e.user_id].did,
+          "siid": listen[e.user_id].siid,
+          "piid": listen[e.user_id].piid,
+          "value": value_next
+        }], listen[e.user_id].authorize)
+        if (devAtt.code != 0) {
+          e.reply('设置失败，错误码：' + devAtt.code)
+          return true
+        }
+        e.reply('已将 ' + listen[e.user_id].devName + ' 的 ' + listen[e.user_id].key + ' 设置为 ' + e.msg)
+      } else {
+      	let value_next = e.msg == '无'? null: e.msg
+        const devAtt = await CoreApi.runAction([{
+          "did": listen[e.user_id].did,
+          "siid": listen[e.user_id].siid,
+          "piid": listen[e.user_id].aiid,
+          "value": value_next
+        }], listen[e.user_id].authorize)
+        if (devAtt.code != 0) {
+          e.reply('设置失败，错误码：' + devAtt.code)
+          return true
+        }
+        e.reply('已执行方法 ' + listen[e.user_id].devName + ' 的 ' + listen[e.user_id].key)
       }
-
-      // 如果值为数字型，转换为数字型
-      if (!isNaN(e.msg)) {
-        value_next = Number(e.msg)
-      }
-      const devAtt = await CoreApi.setDevAtt([{
-        "did": listen[e.user_id].did,
-        "siid": listen[e.user_id].siid,
-        "piid": listen[e.user_id].piid,
-        "value": value_next
-      }], listen[e.user_id].authorize)
-      if (devAtt.code != 0) {
-        e.reply('设置失败，错误码：' + devAtt.code)
-        return true
-      }
-      e.reply('已将 ' + listen[e.user_id].devName + ' 的 ' + listen[e.user_id].key + ' 设置为 ' + e.msg)
       listen[e.user_id] = undefined
       clearTimeout(timeout[e.user_id])
       return true
